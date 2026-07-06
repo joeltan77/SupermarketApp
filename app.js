@@ -122,6 +122,21 @@ app.post('/editProduct/:id', (req, res) => {
     });
 });
 
+app.get('/deleteProduct/:id', (req, res) => {
+    const productId = req.params.id;
+    const sql = 'DELETE FROM products WHERE productId = ?';
+    db.query(sql, [productId], (error, results) => {
+        if (error) {
+            // Handle any error that occurs during the database operation
+            console.error("Error deleting product:", error);
+            res.send('Error deleting product');
+        } else {
+            // Send a success response
+            res.redirect('/');
+        }
+    });
+});
+
 // Start server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
