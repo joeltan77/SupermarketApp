@@ -83,6 +83,26 @@ app.post('/addProduct', (req, res) => {
     });
 });
 
+app.get('/editProduct/:id', (req, res) => {
+    const productId = req.params.id;
+
+    const sql = 'SELECT * FROM products WHERE productId = ?';
+
+    db.query(sql, [productId], (error, results) => {
+        if (error) {
+            console.error('Database query error:', error.message);
+            return res.send('Error retrieving product');
+        }
+
+        if (results.length > 0) {
+            res.render('editProduct', {
+                product: results[0]
+            });
+        } else {
+            res.send('Product not found');
+        }
+    });
+});
 
 // Start server
 app.listen(port, () => {
