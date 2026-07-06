@@ -104,6 +104,24 @@ app.get('/editProduct/:id', (req, res) => {
     });
 });
 
+app.post('/editProduct/:id', (req, res) => {
+    const productId = req.params.id;
+    // Extract product data from the request body
+    const { name, quantity, price } = req.body;
+    const sql = 'UPDATE products SET productName = ? , quantity = ?, price = ? WHERE productId = ?';
+    // Insert the new product into the database
+    db.query(sql, [name, quantity, price, productId], (error, results) => {
+        if (error) {
+            // Handle any error that occurs during the database operation
+            console.error("Error updating product:", error);
+            res.send('Error updating product');
+        } else {
+            // Send a success response
+            res.redirect('/');
+        }
+    });
+});
+
 // Start server
 app.listen(port, () => {
     console.log(`Server running at http://localhost:${port}`);
