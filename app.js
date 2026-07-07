@@ -1,6 +1,6 @@
 const express = require('express');
 const mysql = require('mysql2');
-
+const multer = require('multer');
 const app = express();
 const port = 3000;
 
@@ -9,6 +9,18 @@ app.use(express.urlencoded({ extended: false }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.use(express.static('public'));
+
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'public/images/');
+    },
+    filename: (req, file, cb) => {
+        cb(null, file.originalname);
+    }
+});
+
+const upload = multer({ storage: storage });
 
 // Database connection
 const db = mysql.createConnection({
@@ -66,20 +78,25 @@ app.get('/product/:id', (req, res) => {
 app.get('/addProduct', (req, res) => {
     res.render('addProduct');
 });
-app.post('/addProduct', (req, res) => {
-    // Extract product data from the request body
-    const { name, quantity, price, image } = req.body;
+
+app.post('/addProduct', upload.single('image'), (req, res) => {
+    const { name, quantity, price } = req.body;
+
+    let image = '';
+
+    if (req.file) {
+        image = req.file.filename;
+    }
+
     const sql = 'INSERT INTO products (productName, quantity, price, image) VALUES (?, ?, ?, ?)';
-    // Insert the new product into the database
+
     db.query(sql, [name, quantity, price, image], (error, results) => {
         if (error) {
-            // Handle any error that occurs during the database operation
             console.error("Error adding product:", error);
-            res.send('Error adding product');
-        } else {
-            // Send a success response
-            res.redirect('/');
+            return res.send('Error adding product');
         }
+
+        res.redirect('/');
     });
 });
 
@@ -104,13 +121,21 @@ app.get('/editProduct/:id', (req, res) => {
     });
 });
 
-app.post('/editProduct/:id', (req, res) => {
+app.post('/editProduct/:id', upload.single('image'), (req, res) => {
     const productId = req.params.id;
+
     // Extract product data from the request body
     const { name, quantity, price } = req.body;
-    const sql = 'UPDATE products SET productName = ? , quantity = ?, price = ? WHERE productId = ?';
+
+    let image = req.body.currentImage; // Default to the existing image URL
+    if (req.file) {
+        image = req.file.filename; // Update to the new image filename if a new image is uploaded
+    }
+
+    const sql = 'UPDATE products SET productName = ? , quantity = ?, price = ?, image = ? WHERE productId = ?';
+
     // Insert the new product into the database
-    db.query(sql, [name, quantity, price, productId], (error, results) => {
+    db.query(sql, [name, quantity, price, image, productId], (error, results) => {
         if (error) {
             // Handle any error that occurs during the database operation
             console.error("Error updating product:", error);
